@@ -1,0 +1,35 @@
+// RoadTunes database schema
+//
+// To switch to Postgres/Supabase for production (recommended if you deploy where the
+// SQLite file does not persist):
+//   1. Change `provider` below from "sqlite" to "postgresql"
+//   2. Set DATABASE_URL to your Postgres connection string in .env
+//   3. Run `npx prisma db push`
+// Note: uploaded audio/poster files live on disk (see UPLOAD_DIR), not in the database,
+// so you also need a persistent filesystem or object storage in production.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// One uploaded song. Audio + optional poster are stored on disk; only the filenames
+// and metadata live here. `order` controls the playback sequence.
+model Song {
+  id         String   @id @default(cuid())
+  title      String
+  artist     String
+  audioFile  String
+  audioMime  String
+  posterFile String?
+  posterMime String?
+  durationMs Int      @default(0)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([order])
+}
