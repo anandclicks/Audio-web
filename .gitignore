@@ -26,12 +26,15 @@ yarn-error.log*
 .env.production
 
 # database
-/prisma/*.db
+# NOTE: dev.db is intentionally committed so it deploys as a read-only snapshot.
+# Only the temporary journal/WAL sidecar files are ignored.
 /prisma/*.db-journal
-/prisma/dev.db
+/prisma/*.db-wal
+/prisma/*.db-shm
 
 # uploaded media
-/data
+# NOTE: data/uploads is intentionally committed so audio/posters deploy with the app.
+/data/tmp
 
 # typescript
 *.tsbuildinfo
