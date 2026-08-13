@@ -115,6 +115,8 @@ export default function AdminPage() {
 
       <BackgroundForm onToast={showToast} />
 
+      <CreditForm onToast={showToast} />
+
       <SongList
         songs={songs}
         onChange={setSongs}
@@ -428,6 +430,94 @@ function BackgroundForm({
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Credit & Instagram link ─────────────────────────────────────
+
+function CreditForm({
+  onToast,
+}: {
+  onToast: (kind: "ok" | "err", msg: string) => void;
+}) {
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [creditName, setCreditName] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    const res = await fetch("/api/settings", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      setInstagramUrl(data.instagramUrl ?? "");
+      setCreditName(data.creditName ?? "");
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instagramUrl: instagramUrl.trim(),
+          creditName: creditName.trim(),
+        }),
+      });
+      if (res.ok) {
+        onToast("ok", "Credit & link saved.");
+        await load();
+      } else {
+        onToast("err", "Could not save.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form
+      onSubmit={save}
+      className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5"
+    >
+      <p className="text-xs font-medium uppercase tracking-widest text-white/40">
+        Credit &amp; Instagram
+      </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="text-xs text-white/60">Instagram link</label>
+          <input
+            value={instagramUrl}
+            onChange={(e) => setInstagramUrl(e.target.value)}
+            placeholder="https://www.instagram.com/its.anand.clicks1/"
+            className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm outline-none placeholder:text-white/30 focus:border-white/30"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-white/60">&quot;Made by&quot; name</label>
+          <input
+            value={creditName}
+            onChange={(e) => setCreditName(e.target.value)}
+            placeholder="its.anandclicks.1"
+            className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm outline-none placeholder:text-white/30 focus:border-white/30"
+          />
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-white/40">
+        Leave a field empty to fall back to the default.
+      </p>
+      <button
+        disabled={busy}
+        className="mt-4 rounded-xl bg-white px-6 py-2.5 text-sm font-semibold text-black transition active:scale-95 disabled:opacity-40"
+      >
+        {busy ? "Saving…" : "Save credit"}
+      </button>
+    </form>
   );
 }
 

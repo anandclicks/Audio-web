@@ -24,6 +24,10 @@ export default function Player() {
   const [status, setStatus] = useState<Status>("loading");
   const [songs, setSongs] = useState<Song[]>([]);
   const [bgUrl, setBgUrl] = useState("/imageuserthis.png");
+  const [instagramUrl, setInstagramUrl] = useState(
+    "https://www.instagram.com/its.anand.clicks1/"
+  );
+  const [creditName, setCreditName] = useState("its.anandclicks.1");
   const [index, setIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -63,7 +67,10 @@ export default function Player() {
     fetch("/api/settings", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!cancelled && d?.backgroundUrl) setBgUrl(d.backgroundUrl);
+        if (cancelled || !d) return;
+        if (d.backgroundUrl) setBgUrl(d.backgroundUrl);
+        if (d.instagramUrl) setInstagramUrl(d.instagramUrl);
+        if (d.creditName) setCreditName(d.creditName);
       })
       .catch(() => {});
     return () => {
@@ -178,11 +185,11 @@ export default function Player() {
       <header className="relative z-10 flex items-start justify-between px-6 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-10">
         <Clock />
         <a
-          href="https://www.instagram.com/its.anand.clicks1/"
+          href={instagramUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Instagram — its.anand.clicks1"
-          className="readable-shadow flex h-10 w-10 items-center justify-center rounded-full text-white/85 transition hover:bg-white/10 hover:text-white active:scale-90"
+          aria-label="Instagram"
+          className="readable-shadow flex h-10 w-10 items-center justify-center rounded-full text-white transition hover:bg-white/10 active:scale-90"
         >
           <InstagramIcon />
         </a>
@@ -272,13 +279,13 @@ export default function Player() {
 
         {/* Credit */}
         <a
-          href="https://www.instagram.com/its.anand.clicks1/"
+          href={instagramUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="readable-shadow mx-auto mt-3 flex w-fit items-center gap-1.5 text-[11px] font-medium text-white/45 transition hover:text-white/75"
+          className="readable-shadow mx-auto mt-3 flex w-fit items-center gap-1.5 text-[11px] font-medium text-white transition hover:opacity-80"
         >
           <InstagramIcon size={13} />
-          made by its.anandclicks.1
+          made by {creditName}
         </a>
       </footer>
     </div>
