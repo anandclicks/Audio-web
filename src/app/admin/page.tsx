@@ -95,7 +95,7 @@ export default function AdminPage() {
     <Shell>
       <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-5">
         <div>
-          <h1 className="text-xl font-bold">Auto Anthem admin</h1>
+          <h1 className="text-xl font-bold">Metro.fm admin</h1>
           <p className="mt-1 text-sm text-white/50">Upload songs and set the play order.</p>
         </div>
         <form action="/api/admin/logout" method="post">
@@ -159,7 +159,7 @@ function LoginForm({
 
   return (
     <form onSubmit={submit} className="mx-auto max-w-sm py-16 text-center">
-      <h1 className="text-2xl font-bold">Auto Anthem admin</h1>
+      <h1 className="text-2xl font-bold">Metro.fm admin</h1>
       <p className="mt-2 text-sm text-white/60">Enter the admin password to manage songs.</p>
       <input
         type="password"

@@ -18,7 +18,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Auto Anthem — drive to the beat",
+  title: "Metro.fm — drive to the beat",
   description:
     "A distraction-free, full-screen music player for long drives. Curated by your admin.",
 };

@@ -159,81 +159,111 @@ export default function Player() {
         />
       </div>
 
-      {/* Top-left: live date + time */}
-      <header className="relative z-10 flex items-start px-6 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-10">
+      {/* Top bar: live date + time (left), Instagram (right) */}
+      <header className="relative z-10 flex items-start justify-between px-6 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-10">
         <Clock />
+        <a
+          href="https://www.instagram.com/its.anand.clicks1/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Instagram — its.anand.clicks1"
+          className="readable-shadow flex h-10 w-10 items-center justify-center rounded-full text-white/85 transition hover:bg-white/10 hover:text-white active:scale-90"
+        >
+          <InstagramIcon />
+        </a>
       </header>
 
       {/* Center: big two-line hero title */}
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
         <h1 className="hero-shadow font-display font-black italic leading-[0.85] tracking-tight text-white">
-          <span className="block text-7xl sm:text-8xl md:text-9xl">Auto</span>
-          <span className="block text-7xl sm:text-8xl md:text-9xl">Anthem</span>
+          <span className="block text-7xl sm:text-8xl md:text-9xl">Metro</span>
+          <span className="block text-7xl sm:text-8xl md:text-9xl">.fm</span>
         </h1>
       </main>
 
-      {/* Single-line glass control bar */}
+      {/* Glass control bar.
+          On phones the progress bar is squeezed on one line, so there it drops to
+          its own full-width row below the controls; on sm+ it stays inline. */}
       <footer className="relative z-10 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6">
-        <div className="glass mx-auto flex w-full max-w-lg items-center gap-2.5 rounded-full px-3 py-2.5 sm:gap-3 sm:px-4">
-          {/* Play / Pause */}
-          <button
-            aria-label={isPlaying ? "Pause" : "Play"}
-            onClick={togglePlay}
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white text-black shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6)] transition active:scale-90"
-          >
-            {isPlaying ? <PauseIcon /> : <PlayIcon />}
-          </button>
-
-          {/* Spinning vinyl poster */}
-          <div className="relative h-12 w-12 shrink-0">
-            <div
-              className="vinyl-spin h-full w-full overflow-hidden rounded-full ring-1 ring-white/15"
-              style={{ animationPlayState: isPlaying ? "running" : "paused" }}
+        <div className="glass mx-auto w-full max-w-lg rounded-3xl px-3 py-2.5 sm:rounded-full sm:px-4">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Play / Pause */}
+            <button
+              aria-label={isPlaying ? "Pause" : "Play"}
+              onClick={togglePlay}
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white text-black shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6)] transition active:scale-90"
             >
-              {currentSong?.posterUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={currentSong.posterUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-white/5 text-white/25">
-                  <BrandMark size={18} />
-                </div>
-              )}
-            </div>
-            {/* Vinyl center hole */}
-            <div className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/70 ring-1 ring-white/25" />
-          </div>
+              {isPlaying ? <PauseIcon /> : <PlayIcon />}
+            </button>
 
-          {/* Track + progress */}
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm leading-tight">
-              <span className="font-semibold">{currentSong?.title ?? "—"}</span>
-              {currentSong?.artist ? (
-                <span className="text-white/50"> · {currentSong.artist}</span>
-              ) : null}
-            </p>
-            <div className="mt-1.5 flex items-center gap-2">
-              <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-white/15">
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-white transition-[width] duration-300 ease-linear"
-                  style={{ width: `${progressPct}%` }}
+            {/* Spinning vinyl poster */}
+            <div className="relative h-12 w-12 shrink-0">
+              <div
+                className="vinyl-spin h-full w-full overflow-hidden rounded-full ring-1 ring-white/15"
+                style={{ animationPlayState: isPlaying ? "running" : "paused" }}
+              >
+                {currentSong?.posterUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={currentSong.posterUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-white/5 text-white/25">
+                    <BrandMark size={18} />
+                  </div>
+                )}
+              </div>
+              {/* Vinyl center hole */}
+              <div className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/70 ring-1 ring-white/25" />
+            </div>
+
+            {/* Track title + (inline progress on sm+) */}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm leading-tight">
+                <span className="font-semibold">{currentSong?.title ?? "—"}</span>
+                {currentSong?.artist ? (
+                  <span className="text-white/50"> · {currentSong.artist}</span>
+                ) : null}
+              </p>
+              {/* Inline progress: desktop/tablet only */}
+              <div className="mt-1.5 hidden sm:block">
+                <ProgressBar
+                  progressPct={progressPct}
+                  currentTime={currentTime}
+                  duration={duration}
                 />
               </div>
-              <span className="shrink-0 text-[10px] font-medium tabular-nums text-white/55">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </span>
+            </div>
+
+            {/* Prev / Next */}
+            <div className="flex shrink-0 items-center">
+              <ControlButton label="Previous" onClick={handlePrev}>
+                <PrevIcon />
+              </ControlButton>
+              <ControlButton label="Next" onClick={handleNext}>
+                <NextIcon />
+              </ControlButton>
             </div>
           </div>
 
-          {/* Prev / Next */}
-          <div className="flex shrink-0 items-center">
-            <ControlButton label="Previous" onClick={handlePrev}>
-              <PrevIcon />
-            </ControlButton>
-            <ControlButton label="Next" onClick={handleNext}>
-              <NextIcon />
-            </ControlButton>
+          {/* Stacked progress: phones only, full-width so it isn't squeezed */}
+          <div className="mt-2.5 px-1 sm:hidden">
+            <ProgressBar
+              progressPct={progressPct}
+              currentTime={currentTime}
+              duration={duration}
+            />
           </div>
         </div>
+
+        {/* Credit */}
+        <a
+          href="https://www.instagram.com/its.anand.clicks1/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="readable-shadow mx-auto mt-3 flex w-fit items-center gap-1.5 text-[11px] font-medium text-white/45 transition hover:text-white/75"
+        >
+          <InstagramIcon size={13} />
+          made by its.anandclicks.1
+        </a>
       </footer>
     </div>
   );
@@ -266,6 +296,51 @@ function Clock() {
       <div className="text-lg font-semibold tabular-nums text-white/95">{time}</div>
       <div className="text-xs font-medium text-white/60">{date}</div>
     </div>
+  );
+}
+
+// Progress track + elapsed/total time. Used inline on desktop and full-width on phones.
+function ProgressBar({
+  progressPct,
+  currentTime,
+  duration,
+}: {
+  progressPct: number;
+  currentTime: number;
+  duration: number;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-white/15">
+        <div
+          className="absolute inset-y-0 left-0 rounded-full bg-white transition-[width] duration-300 ease-linear"
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
+      <span className="shrink-0 text-[10px] font-medium tabular-nums text-white/55">
+        {formatTime(currentTime)} / {formatTime(duration)}
+      </span>
+    </div>
+  );
+}
+
+function InstagramIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5.5" />
+      <circle cx="12" cy="12" r="4.2" />
+      <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
 

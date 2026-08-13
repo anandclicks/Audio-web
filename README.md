@@ -1,4 +1,4 @@
-# 🎵 Auto Anthem
+# 🎵 Metro.fm
 
 A distraction-free, **single-screen** music player built for bus & cab drivers on long
 drives. One full-screen player, one playlist — curated entirely by **you** (the admin).
