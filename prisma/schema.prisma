@@ -37,3 +37,10 @@ model Song {
 
   @@index([order])
 }
+
+// Simple key/value store for app-wide settings (e.g. the player's background image
+// URL, which the admin can change). Values are small strings such as a Blob URL.
+model Setting {
+  key   String @id
+  value String
+}

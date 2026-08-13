@@ -113,6 +113,8 @@ export default function AdminPage() {
         onError={(m) => showToast("err", m)}
       />
 
+      <BackgroundForm onToast={showToast} />
+
       <SongList
         songs={songs}
         onChange={setSongs}
@@ -313,6 +315,119 @@ function UploadForm({
         {busy ? "Uploading…" : "Upload song"}
       </button>
     </form>
+  );
+}
+
+// ── Background image ────────────────────────────────────────────
+
+function BackgroundForm({
+  onToast,
+}: {
+  onToast: (kind: "ok" | "err", msg: string) => void;
+}) {
+  const [current, setCurrent] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const fileInput = useRef<HTMLInputElement | null>(null);
+
+  const load = useCallback(async () => {
+    const res = await fetch("/api/settings", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      setCurrent(data.backgroundUrl ?? null);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    try {
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/admin/blob-upload",
+      });
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ backgroundUrl: blob.url }),
+      });
+      if (res.ok) {
+        onToast("ok", "Background updated.");
+        await load();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        onToast("err", data.message || "Could not update background.");
+      }
+    } catch (err) {
+      onToast("err", (err as Error).message || "Upload failed.");
+    } finally {
+      setBusy(false);
+      if (fileInput.current) fileInput.current.value = "";
+    }
+  };
+
+  const resetToDefault = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/settings", { method: "DELETE" });
+      if (res.ok) {
+        onToast("ok", "Reset to the default background.");
+        await load();
+      } else {
+        onToast("err", "Could not reset background.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const preview = current ?? "/imageuserthis.png";
+
+  return (
+    <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+      <p className="text-xs font-medium uppercase tracking-widest text-white/40">
+        Background image
+      </p>
+      <div className="mt-4 flex items-center gap-4">
+        <div className="h-20 w-14 shrink-0 overflow-hidden rounded-lg bg-white/5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="" className="h-full w-full object-cover" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-white/70">
+            {current ? "Custom background is set." : "Using the default background."}
+          </p>
+          <p className="mt-0.5 text-xs text-white/40">
+            Upload a tall (portrait) image for the best fit on phones.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/*"
+              disabled={busy}
+              onChange={onPick}
+              className="w-full max-w-xs rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/70 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-white/20 disabled:opacity-40"
+            />
+            {current && (
+              <button
+                type="button"
+                onClick={resetToDefault}
+                disabled={busy}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-white/60 transition hover:bg-white/10 disabled:opacity-40"
+              >
+                Reset to default
+              </button>
+            )}
+          </div>
+          {busy && <p className="mt-2 text-xs text-white/40">Working…</p>}
+        </div>
+      </div>
+    </div>
   );
 }
 

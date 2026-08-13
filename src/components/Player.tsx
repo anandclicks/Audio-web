@@ -23,6 +23,7 @@ function formatTime(sec: number): string {
 export default function Player() {
   const [status, setStatus] = useState<Status>("loading");
   const [songs, setSongs] = useState<Song[]>([]);
+  const [bgUrl, setBgUrl] = useState("/imageuserthis.png");
   const [index, setIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -51,6 +52,20 @@ export default function Player() {
         if (!cancelled) setStatus("error");
       }
     })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Load the admin-configured background image (falls back to the bundled default).
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/settings", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.backgroundUrl) setBgUrl(d.backgroundUrl);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -140,7 +155,7 @@ export default function Player() {
       <div aria-hidden className="absolute inset-0 overflow-hidden bg-[#05060a]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/imageuserthis.png"
+          src={bgUrl}
           alt=""
           className="h-full w-full object-cover object-center"
         />
@@ -175,9 +190,10 @@ export default function Player() {
 
       {/* Center: big two-line hero title */}
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
-        <h1 className="hero-shadow font-display font-black italic leading-[0.85] tracking-tight text-white">
-          <span className="block text-7xl sm:text-8xl md:text-9xl">Metro</span>
-          <span className="block text-7xl sm:text-8xl md:text-9xl">.fm</span>
+        <h1 className="hero-shadow font-display font-black italic leading-[0.9] tracking-tight text-white">
+          <span className="block whitespace-nowrap text-6xl sm:text-8xl md:text-9xl">
+            Metro.fm
+          </span>
         </h1>
       </main>
 
