@@ -19,9 +19,9 @@ export async function POST(req: Request): Promise<NextResponse> {
           throw new Error("unauthorized");
         }
         return {
-          allowedContentTypes: ["audio/*", "image/*"],
+          allowedContentTypes: ["audio/*", "image/*", "video/*"],
           addRandomSuffix: true,
-          maximumSizeInBytes: 50 * 1024 * 1024, // 50 MB per file
+          maximumSizeInBytes: 200 * 1024 * 1024, // 200 MB per file
         };
       },
       // Required by the callback contract; nothing to persist here since the

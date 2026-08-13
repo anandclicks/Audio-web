@@ -328,6 +328,7 @@ function BackgroundForm({
   onToast: (kind: "ok" | "err", msg: string) => void;
 }) {
   const [current, setCurrent] = useState<string | null>(null);
+  const [currentType, setCurrentType] = useState<"image" | "video">("image");
   const [busy, setBusy] = useState(false);
   const fileInput = useRef<HTMLInputElement | null>(null);
 
@@ -336,6 +337,7 @@ function BackgroundForm({
     if (res.ok) {
       const data = await res.json();
       setCurrent(data.backgroundUrl ?? null);
+      setCurrentType(data.backgroundType === "video" ? "video" : "image");
     }
   }, []);
 
@@ -346,6 +348,7 @@ function BackgroundForm({
   const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const isVideo = file.type.startsWith("video/");
     setBusy(true);
     try {
       const blob = await upload(file.name, file, {
@@ -355,7 +358,10 @@ function BackgroundForm({
       const res = await fetch("/api/admin/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ backgroundUrl: blob.url }),
+        body: JSON.stringify({
+          backgroundUrl: blob.url,
+          backgroundType: isVideo ? "video" : "image",
+        }),
       });
       if (res.ok) {
         onToast("ok", "Background updated.");
@@ -392,25 +398,38 @@ function BackgroundForm({
   return (
     <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
       <p className="text-xs font-medium uppercase tracking-widest text-white/40">
-        Background image
+        Background image / video
       </p>
       <div className="mt-4 flex items-center gap-4">
         <div className="h-20 w-14 shrink-0 overflow-hidden rounded-lg bg-white/5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={preview} alt="" className="h-full w-full object-cover" />
+          {current && currentType === "video" ? (
+            <video
+              src={preview}
+              muted
+              loop
+              autoPlay
+              playsInline
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={preview} alt="" className="h-full w-full object-cover" />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm text-white/70">
-            {current ? "Custom background is set." : "Using the default background."}
+            {current
+              ? `Custom ${currentType} background is set.`
+              : "Using the default background."}
           </p>
           <p className="mt-0.5 text-xs text-white/40">
-            Upload a tall (portrait) image for the best fit on phones.
+            Upload a tall (portrait) image or video. Videos autoplay muted on loop.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <input
               ref={fileInput}
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               disabled={busy}
               onChange={onPick}
               className="w-full max-w-xs rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/70 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-white/20 disabled:opacity-40"

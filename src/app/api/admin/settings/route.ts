@@ -41,19 +41,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
-  // Background image (Blob URL, with cleanup of the previous file).
+  // Background image OR video (Blob URL, with cleanup of the previous file).
   if ("backgroundUrl" in body) {
     const url = body.backgroundUrl;
     if (!isBlobUrl(url)) {
       return NextResponse.json(
-        { error: "bad_request", message: "A valid uploaded image is required." },
+        { error: "bad_request", message: "A valid uploaded file is required." },
         { status: 400 }
       );
     }
+    const type = body.backgroundType === "video" ? "video" : "image";
     const prev = await prisma.setting.findUnique({
       where: { key: "backgroundUrl" },
     });
     await setOrClear("backgroundUrl", url);
+    await setOrClear("backgroundType", type);
     if (prev?.value && prev.value !== url && isBlobUrl(prev.value)) {
       await del(prev.value).catch(() => {});
     }
@@ -84,7 +86,9 @@ export async function DELETE() {
   const prev = await prisma.setting.findUnique({
     where: { key: "backgroundUrl" },
   });
-  await prisma.setting.deleteMany({ where: { key: "backgroundUrl" } });
+  await prisma.setting.deleteMany({
+    where: { key: { in: ["backgroundUrl", "backgroundType"] } },
+  });
   if (prev?.value && isBlobUrl(prev.value)) {
     await del(prev.value).catch(() => {});
   }

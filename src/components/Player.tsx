@@ -24,6 +24,7 @@ export default function Player() {
   const [status, setStatus] = useState<Status>("loading");
   const [songs, setSongs] = useState<Song[]>([]);
   const [bgUrl, setBgUrl] = useState("/imageuserthis.png");
+  const [bgType, setBgType] = useState<"image" | "video">("image");
   const [instagramUrl, setInstagramUrl] = useState(
     "https://www.instagram.com/its.anand.clicks1/"
   );
@@ -69,6 +70,9 @@ export default function Player() {
       .then((d) => {
         if (cancelled || !d) return;
         if (d.backgroundUrl) setBgUrl(d.backgroundUrl);
+        if (d.backgroundType === "video" || d.backgroundType === "image") {
+          setBgType(d.backgroundType);
+        }
         if (d.instagramUrl) setInstagramUrl(d.instagramUrl);
         if (d.creditName) setCreditName(d.creditName);
       })
@@ -160,12 +164,24 @@ export default function Player() {
 
       {/* Full-screen background image */}
       <div aria-hidden className="absolute inset-0 overflow-hidden bg-[#05060a]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={bgUrl}
-          alt=""
-          className="h-full w-full object-cover object-center"
-        />
+        {bgType === "video" ? (
+          <video
+            key={bgUrl}
+            src={bgUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="h-full w-full object-cover object-center"
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={bgUrl}
+            alt=""
+            className="h-full w-full object-cover object-center"
+          />
+        )}
         {/* Soft top vignette for the brand */}
         <div
           className="absolute inset-x-0 top-0 h-40"
