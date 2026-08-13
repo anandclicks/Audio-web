@@ -14,7 +14,11 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Supabase (via the Vercel integration) creates these two automatically:
+  //   POSTGRES_PRISMA_URL      → pooled connection, used for app queries
+  //   POSTGRES_URL_NON_POOLING → direct connection, used for `prisma db push`
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 // One uploaded song. Audio + optional poster are stored in Vercel Blob; `audioFile`
