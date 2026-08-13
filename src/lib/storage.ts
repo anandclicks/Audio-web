@@ -1,21 +1,6 @@
-import path from "path";
-import fs from "fs/promises";
-
-// Where uploaded audio + poster files are stored on disk. Defaults to ./data/uploads.
-// Override with UPLOAD_DIR (useful for pointing at a mounted volume on a VPS).
-export const UPLOAD_DIR = process.env.UPLOAD_DIR
-  ? path.resolve(process.env.UPLOAD_DIR)
-  : path.join(process.cwd(), "data", "uploads");
-
-/** Absolute path for a stored file. `basename` guards against path traversal. */
-export function uploadPath(file: string): string {
-  return path.join(UPLOAD_DIR, path.basename(file));
-}
-
-/** Ensure the upload directory exists before writing. */
-export async function ensureUploadDir(): Promise<void> {
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-}
+// Media files (audio + posters) are stored in Vercel Blob, not on the local disk,
+// because Vercel's runtime filesystem is read-only. The DB stores each file's public
+// Blob URL. See src/app/api/admin/blob-upload/route.ts for the upload token flow.
 
 /** Extract a safe lowercase file extension (with dot) from an original name. */
 export function safeExt(name: string): string {

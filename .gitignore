@@ -26,15 +26,15 @@ yarn-error.log*
 .env.production
 
 # database
-# NOTE: dev.db is intentionally committed so it deploys as a read-only snapshot.
-# Only the temporary journal/WAL sidecar files are ignored.
+# Production uses Postgres; any local SQLite dev file stays out of git.
+/prisma/*.db
 /prisma/*.db-journal
 /prisma/*.db-wal
 /prisma/*.db-shm
 
 # uploaded media
-# NOTE: data/uploads is intentionally committed so audio/posters deploy with the app.
-/data/tmp
+# Production uses Vercel Blob; local uploads (if any) stay out of git.
+/data
 
 # typescript
 *.tsbuildinfo

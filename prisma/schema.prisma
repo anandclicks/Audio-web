@@ -1,24 +1,24 @@
 // RoadTunes database schema
 //
-// To switch to Postgres/Supabase for production (recommended if you deploy where the
-// SQLite file does not persist):
-//   1. Change `provider` below from "sqlite" to "postgresql"
-//   2. Set DATABASE_URL to your Postgres connection string in .env
-//   3. Run `npx prisma db push`
-// Note: uploaded audio/poster files live on disk (see UPLOAD_DIR), not in the database,
-// so you also need a persistent filesystem or object storage in production.
+// Production (Vercel): Postgres for the database + Vercel Blob for the media files.
+//   - DATABASE_URL is a Postgres connection string (Vercel Postgres / Neon / Supabase).
+//   - Tables are created automatically at build time via `prisma db push` (see package.json).
+//   - Uploaded audio/poster files live in Vercel Blob; the DB stores their public URLs.
+//
+// Local dev with SQLite instead: set provider = "sqlite" and
+// DATABASE_URL="file:./dev.db", then run `npx prisma db push`.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// One uploaded song. Audio + optional poster are stored on disk; only the filenames
-// and metadata live here. `order` controls the playback sequence.
+// One uploaded song. Audio + optional poster are stored in Vercel Blob; `audioFile`
+// and `posterFile` hold their public Blob URLs. `order` controls the playback sequence.
 model Song {
   id         String   @id @default(cuid())
   title      String

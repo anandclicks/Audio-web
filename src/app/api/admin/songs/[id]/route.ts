@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
+import { del } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-session";
-import { uploadPath } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -23,11 +22,9 @@ export async function DELETE(
 
   await prisma.song.delete({ where: { id: params.id } });
 
-  // Best-effort file cleanup.
-  await fs.rm(uploadPath(song.audioFile), { force: true }).catch(() => {});
-  if (song.posterFile) {
-    await fs.rm(uploadPath(song.posterFile), { force: true }).catch(() => {});
-  }
+  // Best-effort Blob cleanup.
+  const urls = [song.audioFile, song.posterFile].filter(Boolean) as string[];
+  await del(urls).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

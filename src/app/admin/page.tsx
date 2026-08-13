@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { upload } from "@vercel/blob/client";
 
 interface SongItem {
   id: string;
@@ -213,14 +214,33 @@ function UploadForm({
     setBusy(true);
     try {
       const durationMs = await getAudioDurationMs(audio);
-      const fd = new FormData();
-      fd.append("title", title.trim());
-      fd.append("artist", artist.trim());
-      fd.append("durationMs", String(durationMs));
-      fd.append("audio", audio);
-      if (poster) fd.append("poster", poster);
 
-      const res = await fetch("/api/admin/songs", { method: "POST", body: fd });
+      // Upload files straight to Vercel Blob from the browser (no 4.5 MB
+      // serverless body limit). The token route verifies the admin session.
+      const audioBlob = await upload(audio.name, audio, {
+        access: "public",
+        handleUploadUrl: "/api/admin/blob-upload",
+      });
+      const posterBlob = poster
+        ? await upload(poster.name, poster, {
+            access: "public",
+            handleUploadUrl: "/api/admin/blob-upload",
+          })
+        : null;
+
+      const res = await fetch("/api/admin/songs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          artist: artist.trim(),
+          durationMs,
+          audioUrl: audioBlob.url,
+          audioMime: audio.type || "audio/mpeg",
+          posterUrl: posterBlob?.url ?? null,
+          posterMime: poster?.type ?? null,
+        }),
+      });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         reset();
@@ -228,8 +248,8 @@ function UploadForm({
       } else {
         onError(data.message || "Upload failed.");
       }
-    } catch {
-      onError("Network error during upload.");
+    } catch (err) {
+      onError((err as Error).message || "Network error during upload.");
     } finally {
       setBusy(false);
     }

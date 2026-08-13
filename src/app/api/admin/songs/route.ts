@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import fs from "fs/promises";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-session";
-import { ensureUploadDir, uploadPath, safeExt } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+// Only accept media URLs that live on Vercel Blob, so a caller can't point the
+// player at an arbitrary external URL.
+function isBlobUrl(url: unknown): url is string {
+  return (
+    typeof url === "string" &&
+    /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(url)
+  );
+}
 
 // GET: list songs for the admin UI.
 export async function GET() {
@@ -28,22 +34,24 @@ export async function GET() {
   });
 }
 
-// POST: upload a new song (multipart form: title, artist, audio, poster, durationMs).
+// POST: register a new song. The browser has already uploaded the audio (and
+// optional poster) straight to Vercel Blob; here we just store their URLs + metadata.
+// Body (JSON): { title, artist, durationMs, audioUrl, audioMime, posterUrl?, posterMime? }
 export async function POST(req: NextRequest) {
   if (!getAdminSession()) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const form = await req.formData().catch(() => null);
-  if (!form) {
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
-  const title = String(form.get("title") ?? "").trim();
-  const artist = String(form.get("artist") ?? "").trim();
-  const durationMs = Math.max(0, Math.round(Number(form.get("durationMs")) || 0));
-  const audio = form.get("audio");
-  const poster = form.get("poster");
+  const title = String(body.title ?? "").trim();
+  const artist = String(body.artist ?? "").trim();
+  const durationMs = Math.max(0, Math.round(Number(body.durationMs) || 0));
+  const audioUrl = body.audioUrl;
+  const posterUrl = body.posterUrl;
 
   if (!title) {
     return NextResponse.json(
@@ -51,27 +59,17 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
-  if (!(audio instanceof File) || audio.size === 0) {
+  if (!isBlobUrl(audioUrl)) {
     return NextResponse.json(
       { error: "missing_audio", message: "An audio file is required." },
       { status: 400 }
     );
   }
 
-  await ensureUploadDir();
-
-  // Save audio.
-  const audioFile = `${randomUUID()}${safeExt(audio.name)}`;
-  await fs.writeFile(uploadPath(audioFile), Buffer.from(await audio.arrayBuffer()));
-
-  // Save poster (optional).
-  let posterFile: string | null = null;
-  let posterMime: string | null = null;
-  if (poster instanceof File && poster.size > 0) {
-    posterFile = `${randomUUID()}${safeExt(poster.name)}`;
-    posterMime = poster.type || "image/jpeg";
-    await fs.writeFile(uploadPath(posterFile), Buffer.from(await poster.arrayBuffer()));
-  }
+  const posterFile = isBlobUrl(posterUrl) ? posterUrl : null;
+  const posterMime = posterFile
+    ? String(body.posterMime || "image/jpeg")
+    : null;
 
   // Append to the end of the play order.
   const max = await prisma.song.aggregate({ _max: { order: true } });
@@ -81,8 +79,8 @@ export async function POST(req: NextRequest) {
     data: {
       title,
       artist: artist || "Unknown artist",
-      audioFile,
-      audioMime: audio.type || "audio/mpeg",
+      audioFile: audioUrl,
+      audioMime: String(body.audioMime || "audio/mpeg"),
       posterFile,
       posterMime,
       durationMs,
